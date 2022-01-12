@@ -53,7 +53,9 @@ try:
 
             result = calldata.stdout.decode().split(",")
             hash = result[-1]
-            hash = literal_eval(hash[2:-3])
+            print(result)
+            print(hash)
+            hash = literal_eval(hash[1:-3])
 
             if calldata.stderr:
                 print(calldata.stderr)

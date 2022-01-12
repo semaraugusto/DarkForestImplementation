@@ -12,7 +12,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.10;
-library Pairing {
+library SpawnPairing {
     struct G1Point {
         uint X;
         uint Y;
@@ -162,53 +162,53 @@ library Pairing {
     }
 }
 contract SpawnVerifier {
-    using Pairing for *;
+    using SpawnPairing for *;
     struct VerifyingKey {
-        Pairing.G1Point alfa1;
-        Pairing.G2Point beta2;
-        Pairing.G2Point gamma2;
-        Pairing.G2Point delta2;
-        Pairing.G1Point[] IC;
+        SpawnPairing.G1Point alfa1;
+        SpawnPairing.G2Point beta2;
+        SpawnPairing.G2Point gamma2;
+        SpawnPairing.G2Point delta2;
+        SpawnPairing.G1Point[] IC;
     }
     struct Proof {
-        Pairing.G1Point A;
-        Pairing.G2Point B;
-        Pairing.G1Point C;
+        SpawnPairing.G1Point A;
+        SpawnPairing.G2Point B;
+        SpawnPairing.G1Point C;
     }
     function verifyingKey() internal pure returns (VerifyingKey memory vk) {
-        vk.alfa1 = Pairing.G1Point(
-            11936855615718733929800364322780663779031831010548087280197731388590424567776,
-            5592646190487985977518695618068116348954628769362350765970803931395614229616
+        vk.alfa1 = SpawnPairing.G1Point(
+            17614241335243614168050772028420870716405670079028397996749164378105141830928,
+            19295764916369783945937331541193100766402796728643508239473636442790574928010
         );
 
-        vk.beta2 = Pairing.G2Point(
-            [12443944962683663831374798710489503813661942718542123869300768780629208990718,
-             21176370546999642182902545305180303756959079587548431099242505650979388742776],
-            [19274380558254931829072282987790080014445502541231732173624279174178270514915,
-             6301998922211370868234243112972222240812774006806658567387182999880834204969]
+        vk.beta2 = SpawnPairing.G2Point(
+            [4867151976369217276894191131946709912843902584413170453183281648018816708049,
+             7610886051668421781621474110278166232366765343786715660201901895615863271674],
+            [19897297417010340667149812199498999478563886155591423125054384558585907029787,
+             15404579416759264860215974216428997546479070957669211319356409542555402391692]
         );
-        vk.gamma2 = Pairing.G2Point(
+        vk.gamma2 = SpawnPairing.G2Point(
             [11559732032986387107991004021392285783925812861821192530917403151452391805634,
              10857046999023057135944570762232829481370756359578518086990519993285655852781],
             [4082367875863433681332203403145435568316851327593401208105741076214120093531,
              8495653923123431417604973247489272438418190587263600148770280649306958101930]
         );
-        vk.delta2 = Pairing.G2Point(
-            [13731110798883946237360628109267165480191268014111572481731266327781257321565,
-             16196589058089930652716406592662091943026556037045928547302412068762828605902],
-            [14450090843485091095665185570753201825368005972742240038516040454001810772193,
-             16838404919138685397025933811021864033889825019101614545720363770373318319445]
+        vk.delta2 = SpawnPairing.G2Point(
+            [2605832102049368810578784741734639000571263067006940801729181294868409746941,
+             905741229142683627550242231836606241290320129712929269902384708980890414289],
+            [19785374194476114902588639455010872792463798731208653408683914828613826817769,
+             8486512677922491180883849533153499123424015928807864631588664875097285357333]
         );
-        vk.IC = new Pairing.G1Point[](2);
+        vk.IC = new SpawnPairing.G1Point[](2);
         
-        vk.IC[0] = Pairing.G1Point( 
-            5140598009049259414452513320510307983791063116609566776732668087399489508173,
-            18486429192357239191258479907861199014092747191321751832034378626015087799082
+        vk.IC[0] = SpawnPairing.G1Point( 
+            11586126409658131797459166901851508188540537702241944688285597207460102958189,
+            19167631120602760106959130364904721394696445812556411761194232051934956679010
         );                                      
         
-        vk.IC[1] = Pairing.G1Point( 
-            14301191826919412000287632554666865346831635061745496318491955197811607951905,
-            5570575837370885792651769130978897019132425417281557655449583842506097880094
+        vk.IC[1] = SpawnPairing.G1Point( 
+            5753502581850189932743601717410825752489418057953407534532713947434074146229,
+            11070813929451272026755643322612435347293506939238802694632752831640061297538
         );                                      
         
     }
@@ -217,14 +217,14 @@ contract SpawnVerifier {
         VerifyingKey memory vk = verifyingKey();
         require(input.length + 1 == vk.IC.length,"verifier-bad-input");
         // Compute the linear combination vk_x
-        Pairing.G1Point memory vk_x = Pairing.G1Point(0, 0);
+        SpawnPairing.G1Point memory vk_x = SpawnPairing.G1Point(0, 0);
         for (uint i = 0; i < input.length; i++) {
             require(input[i] < snark_scalar_field,"verifier-gte-snark-scalar-field");
-            vk_x = Pairing.addition(vk_x, Pairing.scalar_mul(vk.IC[i + 1], input[i]));
+            vk_x = SpawnPairing.addition(vk_x, SpawnPairing.scalar_mul(vk.IC[i + 1], input[i]));
         }
-        vk_x = Pairing.addition(vk_x, vk.IC[0]);
-        if (!Pairing.pairingProd4(
-            Pairing.negate(proof.A), proof.B,
+        vk_x = SpawnPairing.addition(vk_x, vk.IC[0]);
+        if (!SpawnPairing.pairingProd4(
+            SpawnPairing.negate(proof.A), proof.B,
             vk.alfa1, vk.beta2,
             vk_x, vk.gamma2,
             proof.C, vk.delta2
@@ -239,9 +239,9 @@ contract SpawnVerifier {
             uint[1] memory input
         ) public view returns (bool r) {
         Proof memory proof;
-        proof.A = Pairing.G1Point(a[0], a[1]);
-        proof.B = Pairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
-        proof.C = Pairing.G1Point(c[0], c[1]);
+        proof.A = SpawnPairing.G1Point(a[0], a[1]);
+        proof.B = SpawnPairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
+        proof.C = SpawnPairing.G1Point(c[0], c[1]);
         uint[] memory inputValues = new uint[](input.length);
         for(uint i = 0; i < input.length; i++){
             inputValues[i] = input[i];

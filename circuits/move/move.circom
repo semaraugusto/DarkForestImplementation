@@ -9,11 +9,10 @@ template Main() {
     signal input x2;
     signal input y2;
 
-    signal input curr_pos_hash;
     signal input distMove;
     signal input distMax;
 
-    signal output h;
+    signal output h[2];
 
     component comp = LessThan(64);
     signal xSq;
@@ -50,16 +49,16 @@ template Main() {
     mimc_check.ins[1] <== y1;
     mimc_check.k <== 0;
 
-    signal pos_check;
-    pos_check <== mimc_check.outs[0];
-    log(curr_pos_hash);
-    log(pos_check);
+    /* signal pos_check; */
+    h[0] <== mimc_check.outs[0];
+    /* log(curr_pos_hash); */
+    /* log(pos_check); */
 
-    component is_equal = IsEqual();
+    /* component is_equal = IsEqual();
     /* curr_pos_hash === pos_check; */
-    is_equal.in[0] <== curr_pos_hash;
+    /* is_equal.in[0] <== curr_pos_hash;
     is_equal.in[1] <== pos_check;
-    is_equal.out === 1; 
+    is_equal.out === 1;   */
 
     component mimc_out = MiMCSponge(2, 220, 1);
 
@@ -67,6 +66,6 @@ template Main() {
     mimc_out.ins[1] <== y2;
     mimc_out.k <== 0;
 
-    h <== mimc_out.outs[0];
+    h[1] <== mimc_out.outs[0];
 }
 component main = Main();

@@ -12,7 +12,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.10;
-library Pairing {
+library MovePairing {
     struct G1Point {
         uint X;
         uint Y;
@@ -162,53 +162,58 @@ library Pairing {
     }
 }
 contract MoveVerifier {
-    using Pairing for *;
+    using MovePairing for *;
     struct VerifyingKey {
-        Pairing.G1Point alfa1;
-        Pairing.G2Point beta2;
-        Pairing.G2Point gamma2;
-        Pairing.G2Point delta2;
-        Pairing.G1Point[] IC;
+        MovePairing.G1Point alfa1;
+        MovePairing.G2Point beta2;
+        MovePairing.G2Point gamma2;
+        MovePairing.G2Point delta2;
+        MovePairing.G1Point[] IC;
     }
     struct Proof {
-        Pairing.G1Point A;
-        Pairing.G2Point B;
-        Pairing.G1Point C;
+        MovePairing.G1Point A;
+        MovePairing.G2Point B;
+        MovePairing.G1Point C;
     }
     function verifyingKey() internal pure returns (VerifyingKey memory vk) {
-        vk.alfa1 = Pairing.G1Point(
-            11936855615718733929800364322780663779031831010548087280197731388590424567776,
-            5592646190487985977518695618068116348954628769362350765970803931395614229616
+        vk.alfa1 = MovePairing.G1Point(
+            17614241335243614168050772028420870716405670079028397996749164378105141830928,
+            19295764916369783945937331541193100766402796728643508239473636442790574928010
         );
 
-        vk.beta2 = Pairing.G2Point(
-            [12443944962683663831374798710489503813661942718542123869300768780629208990718,
-             21176370546999642182902545305180303756959079587548431099242505650979388742776],
-            [19274380558254931829072282987790080014445502541231732173624279174178270514915,
-             6301998922211370868234243112972222240812774006806658567387182999880834204969]
+        vk.beta2 = MovePairing.G2Point(
+            [4867151976369217276894191131946709912843902584413170453183281648018816708049,
+             7610886051668421781621474110278166232366765343786715660201901895615863271674],
+            [19897297417010340667149812199498999478563886155591423125054384558585907029787,
+             15404579416759264860215974216428997546479070957669211319356409542555402391692]
         );
-        vk.gamma2 = Pairing.G2Point(
+        vk.gamma2 = MovePairing.G2Point(
             [11559732032986387107991004021392285783925812861821192530917403151452391805634,
              10857046999023057135944570762232829481370756359578518086990519993285655852781],
             [4082367875863433681332203403145435568316851327593401208105741076214120093531,
              8495653923123431417604973247489272438418190587263600148770280649306958101930]
         );
-        vk.delta2 = Pairing.G2Point(
-            [2215578976978570441795285713349376426813912570685397134596097856876643822022,
-             1477776403209224928712719361251656688739009186192637771129916488683350854399],
-            [12018258000269655953465049142489569929575404117431377334323221681401257132872,
-             8664954287576241005548205522531167903623601709478578264310598361308187567271]
+        vk.delta2 = MovePairing.G2Point(
+            [18243715152797644585305842467880318815816689918977215458924192946455358478185,
+             9341554670269284587051054017934492023269122213769299483688507351920734668598],
+            [7729257289433848784637576710066461405749047480664380053089716663871960995819,
+             5787055614118642931390001319539134691612603007332830475390020566045970710729]
         );
-        vk.IC = new Pairing.G1Point[](2);
+        vk.IC = new MovePairing.G1Point[](3);
         
-        vk.IC[0] = Pairing.G1Point( 
-            17304258320777430198746364269016216036903462715568238784741666141745726577448,
-            21081734959003790673640643113566165370048118981720047138605898274285055920754
+        vk.IC[0] = MovePairing.G1Point( 
+            6479866675137920935922396897334417395372953777778185631755642742023096214115,
+            18015653228909767265221954190906365742685333348621256676998370765163042022907
         );                                      
         
-        vk.IC[1] = Pairing.G1Point( 
-            13666599198659667529758108995888588772616331911025704687363904125645902414821,
-            8144011834238612242495783062869373818900332645797849076051565745196266909648
+        vk.IC[1] = MovePairing.G1Point( 
+            14161141341117062217888511558197699953571441207253537955409482788868894634546,
+            20958745784036326940289098422368873687985754540124634407000424688395000250460
+        );                                      
+        
+        vk.IC[2] = MovePairing.G1Point( 
+            21396819546063692636099410502846742355925167803807176319853916053188416186474,
+            9089432223526412822806504927789181208424511158700653581270191859265719290409
         );                                      
         
     }
@@ -217,14 +222,14 @@ contract MoveVerifier {
         VerifyingKey memory vk = verifyingKey();
         require(input.length + 1 == vk.IC.length,"verifier-bad-input");
         // Compute the linear combination vk_x
-        Pairing.G1Point memory vk_x = Pairing.G1Point(0, 0);
+        MovePairing.G1Point memory vk_x = MovePairing.G1Point(0, 0);
         for (uint i = 0; i < input.length; i++) {
             require(input[i] < snark_scalar_field,"verifier-gte-snark-scalar-field");
-            vk_x = Pairing.addition(vk_x, Pairing.scalar_mul(vk.IC[i + 1], input[i]));
+            vk_x = MovePairing.addition(vk_x, MovePairing.scalar_mul(vk.IC[i + 1], input[i]));
         }
-        vk_x = Pairing.addition(vk_x, vk.IC[0]);
-        if (!Pairing.pairingProd4(
-            Pairing.negate(proof.A), proof.B,
+        vk_x = MovePairing.addition(vk_x, vk.IC[0]);
+        if (!MovePairing.pairingProd4(
+            MovePairing.negate(proof.A), proof.B,
             vk.alfa1, vk.beta2,
             vk_x, vk.gamma2,
             proof.C, vk.delta2
@@ -236,12 +241,12 @@ contract MoveVerifier {
             uint[2] memory a,
             uint[2][2] memory b,
             uint[2] memory c,
-            uint[1] memory input
+            uint[2] memory input
         ) public view returns (bool r) {
         Proof memory proof;
-        proof.A = Pairing.G1Point(a[0], a[1]);
-        proof.B = Pairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
-        proof.C = Pairing.G1Point(c[0], c[1]);
+        proof.A = MovePairing.G1Point(a[0], a[1]);
+        proof.B = MovePairing.G2Point([b[0][0], b[0][1]], [b[1][0], b[1][1]]);
+        proof.C = MovePairing.G1Point(c[0], c[1]);
         uint[] memory inputValues = new uint[](input.length);
         for(uint i = 0; i < input.length; i++){
             inputValues[i] = input[i];
