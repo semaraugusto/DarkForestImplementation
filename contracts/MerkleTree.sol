@@ -38,7 +38,7 @@ contract MerkleTree is MerkleProof {
     // event Log(string data, bytes32 value);
     // event Log(string data, bytes32[] values);
     
-    constructor(uint8 tree_levels) public {
+    constructor(uint8 tree_levels) {
         levels = tree_levels;
         next_index = 0;
 
