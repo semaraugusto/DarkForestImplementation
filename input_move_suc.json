@@ -1,9 +1,1 @@
-{
-    "x1": 44,
-    "y1": 4,
-    "x2": 45,
-    "y2": 4,
-    "curr_pos_hash": "0x15b009ccdd9cf6953ed49fc135a6dfdf208ce46934494fe30a3ec93e31ebcfdf",
-    "distMove": 16,
-    "distMax": 128
-}
+{"x1": 44, "y1": 4, "x2": 45, "y2": 4, "curr_pos_hash": "0x15b009ccdd9cf6953ed49fc135a6dfdf208ce46934494fe30a3ec93e31ebcfdf", "distMove": 16, "distMax": 128}
