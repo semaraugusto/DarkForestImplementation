@@ -32,6 +32,7 @@ contract GameState {
     event InitializedPlanet(string data, address player_addr, uint _input, uint timestamp);
     event Log(string data, uint planet_type);
     event LogPlanet(string data, Types.Planet planet);
+    event Collected(uint amount);
     event Info(string data);
     using Planet for Types.Planet;
 
@@ -86,6 +87,9 @@ contract GameState {
         // collecting resources on current planet
         require(_input[0] == player.curr_pos, "Stop cheating you filthy cheater....");
 
+        bool valid = move_verifier.verifyProof(_a, _b, _c, _input);
+        require(valid, "proof not valid");
+
         if (_input[1] == player.curr_pos){
             Types.Planet storage planet = planets[_input[0]];
             planet.gathered_resources += planet.resources_per_turn;
@@ -98,8 +102,6 @@ contract GameState {
             uint planet_type = Planet.getPlanetType(_input[0]);
             // require(planet_type != 0, "Not a valid planet...");
 
-            bool valid = move_verifier.verifyProof(_a, _b, _c, _input);
-            require(valid, "proof not valid");
 
             if (planet_to.initialized == false) {
                 require(_initializePlanet(planet_type, planet_to) == true, "Could not initialize planet.");
@@ -110,6 +112,7 @@ contract GameState {
                 planet_from.num_players_occupying -= 1;
                 if (planet_from.num_players_occupying == 0) {
                     player.total_resources += planet_from.gathered_resources;
+                    emit Collected(planet_from.gathered_resources);
                     planet_from.gathered_resources = 0;
                 }
             }
