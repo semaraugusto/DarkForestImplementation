@@ -85,10 +85,11 @@ contract GameState {
         require(player.curr_pos != uint(0), "Player has not spawned yet.");
 
         // collecting resources on current planet
-        require(_input[0] == player.curr_pos, "Stop cheating you filthy cheater....");
 
         bool valid = move_verifier.verifyProof(_a, _b, _c, _input);
         require(valid, "proof not valid");
+
+        require(_input[0] == player.curr_pos, "Stop cheating you filthy cheater....");
 
         if (_input[1] == player.curr_pos){
             Types.Planet storage planet = planets[_input[0]];
