@@ -28,10 +28,11 @@ contract GameState {
     uint initialized_planets_count;
     // MerkleTree tree;
     event Spawn(string data, address player_addr, uint _input, uint timestamp);
-    event Move(string data, address player_addr, uint _input, uint timestamp);
+    event Moved(string data, address player_addr, uint _input, uint timestamp);
+    event CollectedInplace(string data, address player_addr, uint _input, uint timestamp);
     event InitializedPlanet(string data, address player_addr, uint _input, uint timestamp);
     event Log(string data, uint planet_type);
-    event LogPlanet(string data, Types.Planet planet);
+    event InitPlanet(string data, Types.Planet planet);
     event Collected(uint amount);
     event Info(string data);
     using Planet for Types.Planet;
@@ -49,11 +50,14 @@ contract GameState {
         move_verifier = mVerifier(_move_verifier_addr);
     }
 
-    function _initializePlanet(uint _planet_type, Types.Planet storage _planet) internal returns(bool) {
+    function initializePlanet(uint _planet_type, Types.Planet storage _planet) internal returns(bool) {
+        _planet.initialized = true;
+        initialized_planets_count += 1;
         emit Log("Planet type", _planet_type);
         if(_planet_type == 0) {
             _planet.resources_per_turn = 0;
             _planet.remaining_resources = 0;
+
         } else if(_planet_type == 1) {
             _planet.remaining_resources = 1000;
             _planet.resources_per_turn = 10;
@@ -67,10 +71,26 @@ contract GameState {
             return false;
         }
 
-        _planet.initialized = true;
 
-        emit LogPlanet("Planet...", _planet);
+        emit InitPlanet("Planet...", _planet);
         return true;
+    }
+    function getPlanetResources(uint _planet_type, Types.Planet memory _planet) internal view returns(Types.Planet memory) {
+        if(_planet_type == 0) {
+            _planet.resources_per_turn = 0;
+            _planet.remaining_resources = 0;
+
+        } else if(_planet_type == 1) {
+            _planet.remaining_resources = 1000;
+            _planet.resources_per_turn = 10;
+        } else if(_planet_type == 2) {
+            _planet.remaining_resources = 10000;
+            _planet.resources_per_turn = 50;
+        } else if(_planet_type == 3) {
+            _planet.remaining_resources = 100000;
+            _planet.resources_per_turn = 150;
+        }
+        return _planet;
     }
 
     
@@ -91,39 +111,50 @@ contract GameState {
 
         require(_input[0] == player.curr_pos, "Stop cheating you filthy cheater....");
 
+        player.timestamp_last_move = block.timestamp;
+
+        // Inplace collection
         if (_input[1] == player.curr_pos){
-            Types.Planet storage planet = planets[_input[0]];
+            Types.Planet storage planet = planets[_input[1]];
             planet.gathered_resources += planet.resources_per_turn;
             planet.remaining_resources -= planet.resources_per_turn;
+            emit CollectedInplace("Collected!", msg.sender, _input[1], block.timestamp);
         } else {
             // player trying to move to another planet
             Types.Planet storage planet_from = planets[player.curr_pos];
-            Types.Planet storage planet_to = planets[_input[0]];
+            if (planet_from.initialized == false) {
+                require(false, "wtf did you do dude");
+            }
+            Types.Planet storage planet_to = planets[_input[1]];
 
-            uint planet_type = Planet.getPlanetType(_input[0]);
+            uint planet_type = Planet.getPlanetType(_input[1]);
             // require(planet_type != 0, "Not a valid planet...");
 
-
             if (planet_to.initialized == false) {
-                require(_initializePlanet(planet_type, planet_to) == true, "Could not initialize planet.");
+                require(initializePlanet(planet_type, planet_to) == true, "Could not initialize planet.");
             }
 
             // leaving planet
+            require(planet_from.num_players_occupying > 0, "There are no players there wtf");
+            planet_from.num_players_occupying -= 1;
+
             if (planet_from.resources_per_turn > 0) {
-                planet_from.num_players_occupying -= 1;
                 if (planet_from.num_players_occupying == 0) {
                     player.total_resources += planet_from.gathered_resources;
                     emit Collected(planet_from.gathered_resources);
                     planet_from.gathered_resources = 0;
                 }
             }
-            // moving
-            player.curr_pos = _input[0];
+            planet_to.num_players_occupying += 1;
+            // Collect resources if there are any
+            if (planet_to.resources_per_turn > 0) {
+                planet_to.gathered_resources += planet_to.resources_per_turn;
+                planet_to.remaining_resources -= planet_to.resources_per_turn;
+
+            }
+            player.curr_pos = _input[1];
+            emit Moved("Moved!", msg.sender, _input[1], block.timestamp);
         }
-        player.timestamp_last_move = block.timestamp;
-        emit Move("Moving!", msg.sender, _input[0], block.timestamp);
-
-
     }
 
     function spawn(
@@ -140,15 +171,11 @@ contract GameState {
         // require(planet_type != 0, "Not a planet.");
 
         Types.Planet storage planet = planets[_input[0]];
-        emit Info("Got planet");
         if(planet.initialized == true) {
-            require(planet.timestamp_last_spawn < block.timestamp - 5 minutes, "Player has recently spawned here!");
+            require(planet.timestamp_last_spawn < block.timestamp - 1 minutes, "Player has recently spawned here!");
             require(planet.num_players_occupying == 0, "Planet is currently occupied");
-            emit Info("Inside if. It is initialized");
         } else {
-            _initializePlanet(planet_type, planet);
-            initialized_planets_count += 1;
-            emit Info("Inside else. It is NOT initialized");
+            require(initializePlanet(planet_type, planet) == true, "Could not initialize planet");
         }
 
         planet.timestamp_last_spawn = block.timestamp;
@@ -162,7 +189,12 @@ contract GameState {
         return players[player_addr];
     }
     function getPlanet(uint addr) public view returns(Types.Planet memory) {
-        return planets[addr];
+        Types.Planet memory planet = planets[addr];
+        if(planet.initialized==true){
+            return planet;
+        }
+        
+        return getPlanetResources(addr, planet);
     }
 
     function getMinSpawnDistance() public view returns(uint32) {

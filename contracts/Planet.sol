@@ -18,9 +18,10 @@ library Planet {
         uint type_id;
         if (planet_hash % 3 == 0) {
             if (planet_hash % 5 == 0) {
-                type_id = 2;
                 if(planet_hash % 7 == 0) {
                     type_id = 3;
+                } else {
+                    type_id = 2;
                 }
             } else {
                 type_id = 1;
